@@ -2,14 +2,13 @@
   "name": "energy-fm",
   "version": "1.0.0",
   "type": "module",
-  
   "devDependencies": {
     "@types/node": "^25.2.3",
     "typescript": "^5.9.3"
   },
   "dependencies": {
+    "@google/genai": "^1.41.0",
     "@spotify/web-api-ts-sdk": "^1.2.0",
-    "axios": "^1.13.5",
     "dotenv": "^17.2.4",
     "npm": "^11.8.0"
   }

@@ -9,7 +9,7 @@ interface Song { rating: string; trackID: string};
 let songJson: Record<string, Song[]> = { "0.0": [], "0.1": [], "0.2": [], "0.3": [], "0.4": [], 
                 "0.5": [], "0.6": [], "0.7": [], "0.8": [], "0.9": [] };
 
-async function getEnergyRating(trackID: string) {
+export async function getEnergyRating(trackID: string) {
     // SPOTIFY STUFF - GET SONG NAME/ARTIST
     const clientID = process.env.CLIENT_ID;
     const clientSecret = process.env.CLIENT_SECRET;
@@ -17,8 +17,8 @@ async function getEnergyRating(trackID: string) {
     const song = await sdk.tracks.get(trackID);
     const songName = song["name"];
     const artistName = song["artists"][0]["name"];
-    // console.log(song["name"]);
-    // console.log(song["artists"][0]["name"]);
+    console.log(song["name"]);
+    console.log(song["artists"][0]["name"]);
 
     // GEMINI API - GET ENERGY SCORE
     const response = await ai.models.generateContent({

@@ -6,9 +6,26 @@ import { tracingChannel } from 'node:diagnostics_channel';
 dotenv.config();
 const ai = new GoogleGenAI({});
 interface Song { rating: string; trackID: string};
-let songJson: Record<string, Song[]> = { "0.0": [], "0.1": [], "0.2": [], "0.3": [], "0.4": [], 
-                "0.5": [], "0.6": [], "0.7": [], "0.8": [], "0.9": [] };
 
+/* JSON FUNCTIONS */
+export async function createJSON() {
+    let songJson: Record<string, Song[]> = { "0.0": [], "0.1": [], "0.2": [], "0.3": [], "0.4": [], 
+                                            "0.5": [], "0.6": [], "0.7": [], "0.8": [], "0.9": [] };
+    return songJson;
+}
+
+export async function resetJSON(songJson: Record<string, Song[]>) {
+    songJson = { "0.0": [], "0.1": [], "0.2": [], "0.3": [], "0.4": [], 
+                "0.5": [], "0.6": [], "0.7": [], "0.8": [], "0.9": [] };
+}
+
+export async function addSong(songJson: Record<string, Song[]>, rating: string, trackID: string) {
+    songJson[rating.substring(0,3)].push({rating, trackID});
+
+    console.log(songJson);
+}
+
+/* API FUNCTIONS */
 export async function getEnergyRating(trackID: string) {
     // SPOTIFY STUFF - GET SONG NAME/ARTIST
     const clientID = process.env.CLIENT_ID;
@@ -34,11 +51,7 @@ export async function getEnergyRating(trackID: string) {
     return [rating, trackID];
 }
 
-async function addSong(rating: string, trackID: string) {
-    songJson[rating.substring(0,3)].push({rating, trackID});
 
-    console.log(songJson);
-}
 
 // getEnergyRating("4Oih3RDrSFg3afaOphBVuy");
 

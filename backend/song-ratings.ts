@@ -22,11 +22,11 @@ export async function resetJSON(songJson: Record<string, Song[]>) {
 export async function addSong(songJson: Record<string, Song[]>, rating: string, trackID: string) {
     songJson[rating.substring(0,3)].push({rating, trackID});
 
-    console.log(songJson);
+    // console.log(songJson);
 }
 
 /* API FUNCTIONS */
-export async function getEnergyRating(trackID: string) {
+export async function getSongDetails(trackID: string) {
     // SPOTIFY STUFF - GET SONG NAME/ARTIST
     const clientID = process.env.CLIENT_ID;
     const clientSecret = process.env.CLIENT_SECRET;
@@ -34,9 +34,12 @@ export async function getEnergyRating(trackID: string) {
     const song = await sdk.tracks.get(trackID);
     const songName = song["name"];
     const artistName = song["artists"][0]["name"];
-    console.log(song["name"]);
-    console.log(song["artists"][0]["name"]);
+    // console.log(song["name"]);
+    // console.log(song["artists"][0]["name"]);
+    return [songName, artistName];
+}
 
+export async function getEnergyRating(songName: string, artistName: string) {
     // GEMINI API - GET ENERGY SCORE
     const response = await ai.models.generateContent({
         model: "gemini-3-flash-preview",
@@ -47,10 +50,8 @@ export async function getEnergyRating(trackID: string) {
     const rating: string = response.text!;
     // console.log(rating);
 
-    // Return rating and song ID
-    return [rating, trackID];
+    return rating;
 }
-
 
 
 // getEnergyRating("4Oih3RDrSFg3afaOphBVuy");

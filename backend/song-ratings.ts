@@ -8,20 +8,23 @@ const ai = new GoogleGenAI({});
 interface Song { rating: string; trackID: string};
 
 /* JSON FUNCTIONS */
-export async function createJSON() {
+export function createJSON() {
     let songJson: Record<string, Song[]> = { "0.0": [], "0.1": [], "0.2": [], "0.3": [], "0.4": [], 
                                             "0.5": [], "0.6": [], "0.7": [], "0.8": [], "0.9": [] };
     return songJson;
 }
 
-export async function resetJSON(songJson: Record<string, Song[]>) {
+export function resetJSON(songJson: Record<string, Song[]>) {
     songJson = { "0.0": [], "0.1": [], "0.2": [], "0.3": [], "0.4": [], 
                 "0.5": [], "0.6": [], "0.7": [], "0.8": [], "0.9": [] };
 }
 
-export async function addSong(songJson: Record<string, Song[]>, rating: string, trackID: string) {
+export function addSong(songJson: Record<string, Song[]>, rating: string, trackID: string) {
     songJson[rating.substring(0,3)].push({rating, trackID});
 
+    songJson[rating.substring(0,3)].sort((a,b) => {
+        return parseFloat(a.rating) - parseFloat(b.rating);
+    })
     // console.log(songJson);
 }
 
@@ -55,6 +58,7 @@ export async function getEnergyRating(songName: string, artistName: string) {
 
 
 // getEnergyRating("4Oih3RDrSFg3afaOphBVuy");
-
-// addSong("0.29", "4Oih3RDrSFg3afaOphBVuy");
-// addSong("0.49", "ljwf39fsjklw3lrkj3213l");
+let json = createJSON();
+addSong(json, "0.29", "4Oih3RDrSFg3afaOphBVuy");
+addSong(json, "0.22", "a3wjlv9zaa3l3wrcs9lwk3");
+addSong(json, "0.49", "ljwf39fsjklw3lrkj3213l");

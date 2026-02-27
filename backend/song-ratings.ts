@@ -58,7 +58,7 @@ export async function getEnergyRating(songName: string, artistName: string) {
 
 
 // getEnergyRating("4Oih3RDrSFg3afaOphBVuy");
-let json = createJSON();
-addSong(json, "0.29", "4Oih3RDrSFg3afaOphBVuy");
-addSong(json, "0.22", "a3wjlv9zaa3l3wrcs9lwk3");
-addSong(json, "0.49", "ljwf39fsjklw3lrkj3213l");
+// let json = createJSON();
+// addSong(json, "0.29", "4Oih3RDrSFg3afaOphBVuy");
+// addSong(json, "0.22", "a3wjlv9zaa3l3wrcs9lwk3");
+// addSong(json, "0.49", "ljwf39fsjklw3lrkj3213l");

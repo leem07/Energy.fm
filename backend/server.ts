@@ -2,6 +2,9 @@ import express, { Request, Response } from "express";
 import querystring from "querystring";
 import crypto from "crypto";
 import dotenv from "dotenv";
+import * as fs from "fs";
+import * as path from "path";
+import * as SongDetails from "./song-ratings";
 
 dotenv.config();
 
@@ -19,9 +22,78 @@ let access_token: string | null = null;
 let refresh_token: string | null = null;
 let last_state: string | null = null;
 
+const SONGS_JSON_PATH = path.join(process.cwd(), "songs.json");
 
 function generateRandomString(length: number): string {
   return crypto.randomBytes(length).toString("hex").slice(0, length);
+}
+
+function sleep(ms: number) {
+  return new Promise((r) => setTimeout(r, ms));
+}
+
+//cache functions
+function loadCache() {
+  try {
+    if (!fs.existsSync(SONGS_JSON_PATH)) {
+      return {
+        updatedAt: new Date(0).toISOString(),
+        tracksById: {},
+        buckets: SongDetails.createJSON(),
+      };
+    }
+
+    const raw = fs.readFileSync(SONGS_JSON_PATH, "utf-8").trim();
+    if (!raw) {
+      return {
+        updatedAt: new Date(0).toISOString(),
+        tracksById: {},
+        buckets: SongDetails.createJSON(),
+      };
+    }
+
+    const parsed = JSON.parse(raw);
+
+    return {
+      updatedAt: parsed.updatedAt ?? new Date(0).toISOString(),
+      tracksById: parsed.tracksById ?? {},
+      buckets: parsed.buckets ?? SongDetails.createJSON(),
+    };
+  } catch {
+    return {
+      updatedAt: new Date(0).toISOString(),
+      tracksById: {},
+      buckets: SongDetails.createJSON(),
+    };
+  }
+}
+
+function saveCache(cache: any) {
+  cache.updatedAt = new Date().toISOString();
+  fs.writeFileSync(SONGS_JSON_PATH, JSON.stringify(cache, null, 2));
+}
+
+async function getEnergyRatingWithRetry(
+  songName: string,
+  artistName: string,
+  retries = 3
+) {
+  for (let attempt = 0; attempt <= retries; attempt++) {
+    try {
+      return await SongDetails.getEnergyRating(songName, artistName);
+    } catch (e: any) {
+      const msg = String(e?.message ?? "");
+      const is429 =
+        msg.includes("429") ||
+        msg.includes("RESOURCE_EXHAUSTED") ||
+        msg.includes("Quota exceeded");
+
+      if (!is429 || attempt === retries) throw e;
+
+      await sleep(31_000);
+    }
+  }
+  throw new Error("unreachable");
 }
 
 //login
@@ -40,12 +112,12 @@ app.get("/login", (req: Request, res: Response) => {
         scope,
         redirect_uri,
         state,
-        show_dialog: true
+        show_dialog: true,
       })
   );
 });
 
-//callback 
+//callback
 app.get("/callback", async (req: Request, res: Response) => {
   const code = (req.query.code as string) || null;
   const state = (req.query.state as string) || null;
@@ -53,7 +125,9 @@ app.get("/callback", async (req: Request, res: Response) => {
   if (!state || !last_state || state !== last_state) {
     return res.status(400).send("state_mismatch");
   }
+
   last_state = null;
+
   if (!code) return res.status(400).send("missing_code");
 
   const body = new URLSearchParams({
@@ -76,26 +150,19 @@ app.get("/callback", async (req: Request, res: Response) => {
   const tokenJson = await tokenResp.json();
 
   if (!tokenResp.ok) {
-    return res.status(500).json({ error: "token_exchange_failed", details: tokenJson });
+    return res.status(500).json(tokenJson);
   }
 
-  access_token = tokenJson.access_token as string;
-  if (tokenJson.refresh_token) {
-    refresh_token = tokenJson.refresh_token as string;
-  }  
+  access_token = tokenJson.access_token;
+  refresh_token = tokenJson.refresh_token ?? null;
 
-  res.send(`
-    <h2>Login success</h2>
-    <p>Now try: <a href="/liked">/liked</a></p>
-  `);
+  res.send(`<h2>Login success</h2><a href="/liked">Go to /liked</a>`);
 });
 
-//get liked songs
+//liked + cache
 app.get("/liked", async (req: Request, res: Response) => {
   if (!access_token) {
-    return res
-      .status(401)
-      .send('No token yet. Go to <a href="/login">/login</a> first.');
+    return res.status(401).send("Login first at /login");
   }
 
   try {
@@ -105,59 +172,64 @@ app.get("/liked", async (req: Request, res: Response) => {
     const r = await fetch(
       `https://api.spotify.com/v1/me/tracks?limit=${limit}&offset=${offset}`,
       {
-        headers: {
-          Authorization: `Bearer ${access_token}`,
-        },
+        headers: { Authorization: `Bearer ${access_token}` },
       }
     );
 
-    const text = await r.text();
-    let data: any;
-    try {
-      data = JSON.parse(text);
-    } catch {
-      data = { raw: text };
-    }
+    const data = await r.json();
 
     if (!r.ok) {
-      return res.status(r.status).json({
-        error: "spotify_api_error",
-        status: r.status,
-        statusText: r.statusText,
-        details: data,
-      });
+      return res.status(r.status).json(data);
     }
 
-    const songs = (data.items ?? []).map((item: any) => ({
-      id: item.track?.id,
-      name: item.track?.name,
-      artist: (item.track?.artists ?? []).map((a: any) => a.name).join(", "),
-    }));
-    
-    const list = songs
-      .map((s: any, index: number) => `
-        <div style="margin-bottom: 12px;">
-          <div>${index + 1}. ${s.name} — ${s.artist}</div>
-          <div style="margin-left: 16px">id: ${s.id}</div>
-        </div>
-      `)
-      .join("");
-    
-    return res.send(`
-      <h2>Liked Songs</h2>
-      <p>Total songs: ${data.total}</p>
-      <div>${list}</div>
-    `);
+    const tracks = (data.items ?? [])
+      .map((item: any) => item.track)
+      .filter((t: any) => t?.id && t?.name && Array.isArray(t?.artists));
+
+    const cache = loadCache();
+
+    const newTracks = tracks.filter((t: any) => !cache.tracksById[t.id]);
+
+    const newlyRated: Array<{ id: string; name: string; rating: string }> = [];
+
+    for (const track of newTracks) {
+      const artist = track.artists.map((a: any) => a.name).join(", ");
+
+      const rating = await getEnergyRatingWithRetry(track.name, artist);
+
+      cache.tracksById[track.id] = {
+        trackID: track.id,
+        rating,
+      };
+
+      SongDetails.addSong(cache.buckets, rating, track.id);
+
+      newlyRated.push({ id: track.id, name: track.name, rating });
+
+      await sleep(12_500);
+    }
+
+    if (newlyRated.length > 0) {
+      saveCache(cache);
+    }
+
+    return res.json({
+      totalLiked: data.total,
+      fetchedThisPage: tracks.length,
+      newSongsRated: newlyRated.length,
+      updatedAt: cache.updatedAt,
+      buckets: cache.buckets,
+    });
   } catch (err: any) {
-    console.error("Error fetching liked songs:", err);
+    console.error(err);
     return res.status(500).json({
-      error: "failed_to_fetch_liked_songs",
+      error: "failed_to_process_liked_songs",
       message: err?.message ?? String(err),
     });
   }
 });
 
+//start server
 app.listen(8888, () => {
   console.log("http://127.0.0.1:8888/login");
 });
-

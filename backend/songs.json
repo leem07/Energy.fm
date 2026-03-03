@@ -1,0 +1,70 @@
+{
+  "updatedAt": "2026-03-03T11:37:35.629Z",
+  "tracksById": {
+    "5CnFIS5q7xnORxYIAd4z1U": {
+      "trackID": "5CnFIS5q7xnORxYIAd4z1U",
+      "rating": "0.25"
+    },
+    "5OP4i76ZTqEAk85tTAoYZO": {
+      "trackID": "5OP4i76ZTqEAk85tTAoYZO",
+      "rating": "0.35"
+    },
+    "7B5Npv8NjjTCzk8PLpU66h": {
+      "trackID": "7B5Npv8NjjTCzk8PLpU66h",
+      "rating": "0.33"
+    },
+    "1z9kQ14XBSN0r2v6fx4IdG": {
+      "trackID": "1z9kQ14XBSN0r2v6fx4IdG",
+      "rating": "0.55"
+    },
+    "3jb7gznZVfqyMQGJo4hzG2": {
+      "trackID": "3jb7gznZVfqyMQGJo4hzG2",
+      "rating": "0.71"
+    },
+    "1Iqatfo5FJV2nMrqL6pWmr": {
+      "trackID": "1Iqatfo5FJV2nMrqL6pWmr",
+      "rating": "0.81"
+    }
+  },
+  "buckets": {
+    "0.0": [],
+    "0.1": [],
+    "0.2": [
+      {
+        "rating": "0.25",
+        "trackID": "5CnFIS5q7xnORxYIAd4z1U"
+      }
+    ],
+    "0.3": [
+      {
+        "rating": "0.33",
+        "trackID": "7B5Npv8NjjTCzk8PLpU66h"
+      },
+      {
+        "rating": "0.35",
+        "trackID": "5OP4i76ZTqEAk85tTAoYZO"
+      }
+    ],
+    "0.4": [],
+    "0.5": [
+      {
+        "rating": "0.55",
+        "trackID": "1z9kQ14XBSN0r2v6fx4IdG"
+      }
+    ],
+    "0.6": [],
+    "0.7": [
+      {
+        "rating": "0.71",
+        "trackID": "3jb7gznZVfqyMQGJo4hzG2"
+      }
+    ],
+    "0.8": [
+      {
+        "rating": "0.81",
+        "trackID": "1Iqatfo5FJV2nMrqL6pWmr"
+      }
+    ],
+    "0.9": []
+  }
+}

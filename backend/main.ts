@@ -1,4 +1,6 @@
 import * as SongDetails from "./song-ratings";
+import { getHeartRateNow } from "./heart-rate";
+import * as path from "path";
 
 export async function main() {
 
@@ -13,7 +15,9 @@ export async function main() {
     }
 
     // Get heart rate
-    
+    const bpm = getHeartRateNow(path.join(process.cwd(), "heart-rate.csv"));
+    console.log("current bucket bpm:", bpm);
+
     
     // Get heart rate conversion
 
@@ -21,3 +25,4 @@ export async function main() {
 
 }
 
+main().catch(console.error);

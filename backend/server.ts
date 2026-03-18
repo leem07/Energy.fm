@@ -2,6 +2,7 @@ import express, { Request, Response } from "express";
 import querystring from "querystring";
 import crypto from "crypto";
 import dotenv from "dotenv";
+import cors from 'cors';
 import * as fs from "fs";
 import * as path from "path";
 import * as SongDetails from "./song-ratings";
@@ -9,6 +10,7 @@ import * as SongDetails from "./song-ratings";
 dotenv.config();
 
 const app = express();
+app.use(cors({ origin: 'http://localhost:3000' }));
 
 const client_id = process.env.CLIENT_ID;
 const client_secret = process.env.CLIENT_SECRET;
@@ -156,6 +158,7 @@ app.get("/callback", async (req: Request, res: Response) => {
   access_token = tokenJson.access_token;
   refresh_token = tokenJson.refresh_token ?? null;
 
+  res.redirect(`http://localhost:3000/?access_token=${access_token}`);
   res.send(`<h2>Login success</h2><a href="/liked">Go to /liked</a>`);
 });
 
@@ -232,4 +235,49 @@ app.get("/liked", async (req: Request, res: Response) => {
 //start server
 app.listen(8888, () => {
   console.log("http://127.0.0.1:8888/login");
+});
+
+//me
+app.get("/me", async (req: Request, res: Response) => {
+  const token = req.headers.authorization?.replace("Bearer ", "");
+  
+  if (!token) return res.status(401).json({ error: "not_logged_in" });
+
+  console.log("Token received:", token?.slice(0, 20) + "..."); 
+
+  const r = await fetch("https://api.spotify.com/v1/me", {
+    headers: { Authorization: `Bearer ${token}` },
+  });
+
+  const text = await r.text(); 
+  console.log("Spotify response:", text.slice(0, 100)); 
+
+  try {
+    const data = JSON.parse(text);
+    res.json(data);
+  } catch {
+    res.status(500).json({ error: "invalid_response", raw: text });
+  }
+});
+
+//search
+app.get("/search", async (req: Request, res: Response) => {
+  const token = req.headers.authorization?.replace("Bearer ", "");
+  const query = req.query.q as string;
+
+  if (!token) return res.status(401).json({ error: "not_logged_in" });
+  if (!query) return res.status(400).json({ error: "missing_query" });
+
+  const r = await fetch(
+    `https://api.spotify.com/v1/search?q=${encodeURIComponent(query)}&type=track&limit=20`,
+    { headers: { Authorization: `Bearer ${token}` } }
+  );
+
+  const text = await r.text();
+  try {
+    const data = JSON.parse(text);
+    res.json(data);
+  } catch {
+    res.status(500).json({ error: "invalid_response", raw: text });
+  }
 });

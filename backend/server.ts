@@ -1,11 +1,11 @@
-import express, { Request, Response } from "express";
+import express, { type Request, type Response } from "express";
 import querystring from "querystring";
 import crypto from "crypto";
 import dotenv from "dotenv";
 import cors from 'cors';
 import * as fs from "fs";
 import * as path from "path";
-import * as SongDetails from "./song-ratings";
+import * as SongDetails from "./song-ratings.js";
 
 dotenv.config();
 

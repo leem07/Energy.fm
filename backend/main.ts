@@ -1,5 +1,5 @@
-import * as SongDetails from "./song-ratings";
-import { getHeartRateNow } from "./heart-rate";
+import * as SongDetails from "./song-ratings.js";
+import { getHeartRateNow } from "./heart-rate.js";
 import * as path from "path";
 
 export async function main() {

@@ -1,7 +1,7 @@
 {
   "name": "energy-fm",
   "version": "1.0.0",
-  "type": "commonjs",
+  "type": "module",
   "devDependencies": {
     "@types/cors": "^2.8.19",
     "@types/express": "^5.0.6",

@@ -45,8 +45,9 @@ export default function SearchResultCard({
         </div>
       </div>
 
-      <div className="text-right">
-        <div className="text-lg font-bold text-white">{score}</div>
+      <div className="text-right flex-shrink-0">
+        <div className="text-lg font-bold text-white">{score}%</div>
+        <div className="text-xs text-slate-400">energy match</div>
       </div>
     </Component>
   );

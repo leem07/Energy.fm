@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import heart from '../../assets/heart.svg';
 
 const heartbeatStyle = `
@@ -15,19 +15,52 @@ const heartbeatStyle = `
   }
 `;
 
-export default function HeartBeatBox() {
+export default function HeartBeatBox({ onBpmChange }: { onBpmChange?: (bpm: number) => void }) {
   const [bpm, setBpm] = useState(72);
+  const [time, setTime] = useState('--:--');
   const [spinning, setSpinning] = useState(false);
-  const [lastUpdated, setLastUpdated] = useState(() => {
-    const now = new Date();
-    return now.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
-  });
 
-  const handleClick = () => {
+  const fetchHeartRate = async () => {
+    try {
+      const res = await fetch('http://127.0.0.1:8888/heart-rate');
+      const data = await res.json();
+      if (data.bpm) {
+        setBpm(data.bpm);
+        setTime(data.time);
+        if (onBpmChange) onBpmChange(data.bpm);
+      }
+    } catch (err) {
+      console.error('Failed to fetch heart rate:', err);
+    }
+  };
+
+  // fetch on mount
+  useEffect(() => {
+    fetchHeartRate();
+  }, []);
+
+  // poll every 5 minutes
+  useEffect(() => {
+    const interval = setInterval(fetchHeartRate, 300000);
+    return () => clearInterval(interval);
+  }, []);
+
+  // manual advance to next row
+  const handleClick = async () => {
     setSpinning(true);
-    setBpm(Math.floor(Math.random() * 40) + 60);
-    const now = new Date();
-    setLastUpdated(now.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }));
+    try {
+      const res = await fetch('http://127.0.0.1:8888/heart-rate/next', {
+        method: 'POST',
+      });
+      const data = await res.json();
+      if (data.bpm) {
+        setBpm(data.bpm);
+        setTime(data.time);
+        if (onBpmChange) onBpmChange(data.bpm);
+      }
+    } catch (err) {
+      console.error('Failed to advance heart rate:', err);
+    }
     setTimeout(() => setSpinning(false), 600);
   };
 
@@ -62,7 +95,7 @@ export default function HeartBeatBox() {
             >
               ↻
             </span>
-            <span>Last Updated: {lastUpdated}</span>
+            <span>Last Updated: {time}</span>
           </div>
         </div>
       </div>

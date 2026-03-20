@@ -1,7 +1,7 @@
 {
   "name": "energy-fm",
   "version": "1.0.0",
-  "type": "commonjs",
+  "type": "module",
   "devDependencies": {
     "@types/cors": "^2.8.19",
     "@types/express": "^5.0.6",
@@ -15,6 +15,7 @@
     "cors": "^2.8.6",
     "dotenv": "^17.2.4",
     "express": "^5.2.1",
+    "groq-sdk": "^1.1.1",
     "npm": "^11.8.0"
   },
   "scripts": {

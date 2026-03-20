@@ -43,9 +43,7 @@ export default function IconLabelTabs() {
       <Tab icon={<SearchIcon />} label="Search" sx={{ color: 'white' , fontFamily: 'Hanken Grotesk', '&.Mui-selected': {
       color: '#23d3ee',
     }, }} />
-      <Tab icon={<PersonIcon />} label="Profile" sx={{ color: 'white', fontFamily: 'Hanken Grotesk','&.Mui-selected': {
-      color: '#23d3ee',
-    }, }} />
+
     </Tabs>
   );
 }

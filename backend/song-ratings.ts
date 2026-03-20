@@ -1,13 +1,13 @@
 import { SpotifyApi } from '@spotify/web-api-ts-sdk';
-import { GoogleGenAI } from '@google/genai';
+import Groq from 'groq-sdk';
 import * as dotenv from 'dotenv';
-import { tracingChannel } from 'node:diagnostics_channel';
 
 dotenv.config();
-const ai = new GoogleGenAI({});
-interface Song { rating: string; trackID: string};
 
-/* JSON FUNCTIONS */
+const groq = new Groq({ apiKey: process.env.GROQ_API_KEY });
+
+interface Song { rating: string; trackID: string };
+
 export function createJSON() {
     let songJson: Record<string, Song[]> = { "0.0": [], "0.1": [], "0.2": [], "0.3": [], "0.4": [], 
                                             "0.5": [], "0.6": [], "0.7": [], "0.8": [], "0.9": [] };
@@ -20,45 +20,44 @@ export function resetJSON(songJson: Record<string, Song[]>) {
 }
 
 export function addSong(songJson: Record<string, Song[]>, rating: string, trackID: string) {
-    songJson[rating.substring(0,3)].push({rating, trackID});
-
-    songJson[rating.substring(0,3)].sort((a,b) => {
-        return parseFloat(a.rating) - parseFloat(b.rating);
-    })
-    // console.log(songJson);
+    const bucket = (Math.floor(parseFloat(rating) * 10) / 10).toFixed(1);
+    songJson[bucket].push({ rating, trackID });
+    songJson[bucket].sort((a, b) => parseFloat(a.rating) - parseFloat(b.rating));
 }
 
-/* API FUNCTIONS */
 export async function getSongDetails(trackID: string) {
-    // SPOTIFY STUFF - GET SONG NAME/ARTIST
     const clientID = process.env.CLIENT_ID;
     const clientSecret = process.env.CLIENT_SECRET;
     const sdk = SpotifyApi.withClientCredentials(clientID!, clientSecret!);
     const song = await sdk.tracks.get(trackID);
-    const songName = song["name"];
-    const artistName = song["artists"][0]["name"];
-    // console.log(song["name"]);
-    // console.log(song["artists"][0]["name"]);
-    return [songName, artistName];
+    return [song.name, song.artists[0].name];
 }
 
 export async function getEnergyRating(songName: string, artistName: string) {
-    // GEMINI API - GET ENERGY SCORE
-    const response = await ai.models.generateContent({
-        model: "gemini-3-flash-preview",
-        contents: `Rate the song ${songName} by ${artistName} for its energy 
-                    from 0 to 1, 0 being low energy and 1 being high energy.
-                    Give only the rating.`
+    const response = await groq.chat.completions.create({
+        model: "llama-3.1-8b-instant",
+        messages: [{
+            role: "user",
+            content: `You are a music analysis system.
+
+Rate the ENERGY of the song "${songName}" by ${artistName} on a scale from 0.0 to 1.0.
+
+Energy definition:
+- 0.0 = very calm, slow, soft (e.g. ambient, acoustic, lullaby)
+- 0.3 = relaxed, mellow
+- 0.5 = moderate, typical pop
+- 0.7 = upbeat, danceable
+- 1.0 = intense, fast, loud (e.g. EDM, hype, aggressive)
+
+Rules:
+- Output ONLY a number between 0.0 and 1.0
+- Use exactly 2 decimal places (e.g. 0.37)
+- Do NOT include any text
+
+Energy rating:`
+        }],
+        max_tokens: 10,
     });
-    const rating: string = response.text!;
-    // console.log(rating);
 
-    return rating;
+    return response.choices[0]?.message?.content?.trim() ?? "0.50";
 }
-
-
-// getEnergyRating("4Oih3RDrSFg3afaOphBVuy");
-// let json = createJSON();
-// addSong(json, "0.29", "4Oih3RDrSFg3afaOphBVuy");
-// addSong(json, "0.22", "a3wjlv9zaa3l3wrcs9lwk3");
-// addSong(json, "0.49", "ljwf39fsjklw3lrkj3213l");

@@ -2,23 +2,27 @@ import Select from '@mui/joy/Select';
 import Option from '@mui/joy/Option';
 
 const activities = [
-  { value: 'sleeping', label: 'Sleeping', score: 2 },
-  { value: 'walking', label: 'Walking', score: 25 },
-  { value: 'yoga', label: 'Yoga', score: 35 },
-  { value: 'hiking', label: 'Hiking', score: 55 },
-  { value: 'cycling', label: 'Cycling', score: 65 },
-  { value: 'swimming', label: 'Swimming', score: 72 },
-  { value: 'weightlifting', label: 'Weightlifting', score: 75 },
-  { value: 'basketball', label: 'Basketball', score: 80 },
-  { value: 'soccer', label: 'Soccer', score: 85 },
-  { value: 'running', label: 'Running', score: 90 },
-  { value: 'hiit', label: 'HIIT', score: 97 },
+  { value: 'sleeping', label: 'Sleeping', score: 0.0 },
+  { value: 'resting', label: 'Resting / Relaxing', score: 0.1 },
+  { value: 'studying', label: 'Studying / Working', score: 0.2 },
+  { value: 'walking', label: 'Walking', score: 0.4 },
+  { value: 'light_activity', label: 'Light Activity (Yoga, Stretching)', score: 0.5 },
+  { value: 'moderate_activity', label: 'Moderate Activity (Hiking, Cycling)', score: 0.7 },
+  { value: 'intense_activity', label: 'Intense Activity (Running, Sports)', score: 0.9 },
 ];
 
-export default function SelectBasic() {
+export default function SelectBasic({ onActivityChange }) {
+  const saved = localStorage.getItem('selected_activity');
+  const defaultValue = saved ? JSON.parse(saved).value : 'resting';
+
   return (
     <Select
-      defaultValue="walking"
+      listboxPlacement="bottom"
+      defaultValue={defaultValue}
+      onChange={(e, value) => {
+        const activity = activities.find(a => a.value === value);
+        if (activity && onActivityChange) onActivityChange(activity);
+      }}
       sx={{
         width: 200,
         backgroundColor: '#1E293B',
@@ -29,7 +33,7 @@ export default function SelectBasic() {
     >
       {activities.map((a) => (
         <Option key={a.value} value={a.value}>
-          {a.label} — {a.score}/100
+          {a.label}
         </Option>
       ))}
     </Select>

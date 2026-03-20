@@ -21,12 +21,12 @@ function AuthHandler() {
       localStorage.setItem('spotify_token', token);
       console.log('Token saved to localStorage');
       window.history.replaceState({}, document.title, '/');
-      navigate('/home');
+      navigate('/onboarding');
     } else {
       const stored = localStorage.getItem('spotify_token');
       console.log('Stored token:', stored);
       if (stored) {
-        navigate('/home');
+        navigate('/onboarding');
       } else {
         navigate('/login');
       }

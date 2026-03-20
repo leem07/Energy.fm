@@ -1,7 +1,10 @@
 import { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import OnboardingButton from "../Button/onboarding-buttons";
 
 function OnboardingQuestions() {
+  const navigate = useNavigate();
+
   const questions = [
     {
       id: 1,
@@ -27,58 +30,46 @@ function OnboardingQuestions() {
 
   const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0);
   const [answers, setAnswers] = useState({});
-  const [finished, setFinished] = useState(false);
 
   function handleAnswer(option) {
     const q = questions[currentQuestionIndex];
-    setAnswers(prev => ({ ...prev, [q.id]: option }));
+    const updatedAnswers = { ...answers, [q.id]: option };
+    setAnswers(updatedAnswers);
 
     if (currentQuestionIndex < questions.length - 1) {
       setCurrentQuestionIndex(i => i + 1);
     } else {
-      setFinished(true);
+      localStorage.setItem('onboarded', 'true');
+      localStorage.setItem('onboarding_answers', JSON.stringify(updatedAnswers));
+      navigate('/home');
     }
-  }
-
-  if (finished) {
-    return (
-      <div className="onboarding-questions">
-        <h2>Thanks — you're all set!</h2>
-        <p>Responses:</p>
-        <ul>
-          {questions.map(q => (
-            <li key={q.id}>{q.question}: {answers[q.id]}</li>
-          ))}
-        </ul>
-      </div>
-    );
   }
 
   const current = questions[currentQuestionIndex];
 
   return (
-  <div className="min-h-screen flex items-center justify-center bg-[#0C1D1F] text-white">
-    <div className="flex flex-col gap-4 w-full max-w-md text-center">
-      <h3>
-        Question {currentQuestionIndex + 1} of {questions.length}
-      </h3>
+    <div className="min-h-screen flex items-center justify-center bg-[#0C1D1F] text-white">
+      <div className="flex flex-col gap-4 items-center w-full max-w-md text-center">
+        <h3>
+          Question {currentQuestionIndex + 1} of {questions.length}
+        </h3>
 
-      <h2 className="text-xl font-semibold">
-        {current.question}
-      </h2>
+        <h2 className="text-xl font-semibold">
+          {current.question}
+        </h2>
 
-      <div className="flex flex-col gap-2">
-        {current.options.map((opt) => (
-          <OnboardingButton
-            key={opt}
-            text={opt}
-            onClick={() => handleAnswer(opt)}
-          />
-        ))}
+        <div className="flex flex-col gap-2">
+          {current.options.map((opt) => (
+            <OnboardingButton
+              key={opt}
+              text={opt}
+              onClick={() => handleAnswer(opt)}
+            />
+          ))}
+        </div>
       </div>
     </div>
-  </div>
-)
+  );
 }
 
 export default OnboardingQuestions;
